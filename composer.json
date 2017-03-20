@@ -1,0 +1,23 @@
+{
+    "name": "braghetto/midas",
+    "description": "Package to handle online payment.",
+    "keywords": ["Mercado pago", "PHP"],
+    "license": "MIT",
+    "type": "project",
+    "authors": [
+        {
+            "name": "Neto Braghetto",
+            "email": "netow93@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=5.5.9",
+        "ext-curl": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Braghetto\\Midas\\": "src/Braghetto/Midas/"
+        }
+    }
+}
