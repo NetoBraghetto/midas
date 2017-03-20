@@ -1,7 +1,11 @@
 {
     "name": "braghetto/midas",
     "description": "Package to handle online payment.",
-    "keywords": ["Mercado pago", "PHP"],
+    "keywords": [
+        "PHP",
+        "Online payment",
+        "Mercado pago"
+    ],
     "license": "MIT",
     "type": "project",
     "authors": [
@@ -13,11 +17,23 @@
     ],
     "require": {
         "php": ">=5.5.9",
-        "ext-curl": "*"
+        "mercadopago/sdk": "0.5.2"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "5.*",
+        "illuminate/support": "^5.4"
     },
     "autoload": {
         "psr-4": {
             "Braghetto\\Midas\\": "src/Braghetto/Midas/"
         }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Braghetto\\Midas\\Test\\": "tests/"
+        },
+        "files": [
+            "tests/helpers.php"
+        ]
     }
 }
