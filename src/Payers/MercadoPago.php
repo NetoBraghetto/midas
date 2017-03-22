@@ -32,66 +32,39 @@ class MercadoPago implements Payable
 	protected $parsedAddress;
 
 	protected $validationFields = [
-		'order' => [
-	        'id',
-	        'total',
-	        'installments',
-	    ],
-	    'payment' => [
-	        'method',
-	    ],
+		// 'order' => [
+	 //        'id',
+	 //        'total',
+	 //        'installments',
+	 //    ],
+	 //    'payment' => [
+	 //        'method',
+	 //    ],
 	    'items' => [
-	        'id',
-			'name',
-			'image_url',
-			'description',
-			'quantity',
-			'price',
+	    	[
+		        'id',
+				'name',
+				'image_url',
+				'description',
+				'quantity',
+				'price',
+	    	]
 	    ],
-	    'shipping_address' => [
-	        'street',
-	        'number',
-	        'zip_code',
-	    ],
-	    'customer' => [
-	        'name',
-	        'last_name',
-	        'email',
-	        'phones' => [
-	            ['area_code', 'number'],
-	        ],
-	        'created_at',
-	    ],
+	    // 'shipping_address' => [
+	    //     'street',
+	    //     'number',
+	    //     'zip_code',
+	    // ],
+	    // 'customer' => [
+	    //     'name',
+	    //     'last_name',
+	    //     'email',
+	    //     'phones' => [
+	    //         ['area_code', 'number'],
+	    //     ],
+	    //     'created_at',
+	    // ],
 	];
-	// protected $orderValidationFields = [
-	// 	'id',
-	// 	'total',
-	// 	'payment_method',
-	// 	'installments',
-	// 	'payment',
-	// ];
-
-	// protected $itemValidationFields = [
-	// 	'id',
-	// 	'name',
-	// 	'image_url',
-	// 	'description',
-	// 	'quantity',
-	// 	'price',
-	// ];
-
-	// protected $shippingValidationFields = [
-	// 	'street',
-	// 	'number',
-	// 	'zip_code',
-	// ];
-
-	// protected $customerValidationFields = [
-	// 	'name',
-	// 	'last_name',
-	// 	'phones',
-	// 	'created_at',
-	// ];
 
 	public function __construct($client_id, $client_secret)
 	{
@@ -99,8 +72,29 @@ class MercadoPago implements Payable
 		$this->secret = $client_secret;
 	}
 
+	protected function validate($fields, $data)
+	{
+		foreach ($fields as $key => $field) {
+			if (is_array($field)) {
+				if (!$this->validate($fields[$key], $data[$key])) {
+					return false;
+				}
+			} else{
+				var_dump($data);
+				if (!isset($data[$field])) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
     public function fill(array $data)
     {
+    	// dd($data);
+    	// dd($this->validationFields);
+    	dd($this->validate($this->validationFields, $data));
+    	dd(2);
     	if (
     		!isset($data['items'], $data['shipping'], $data['customer']) &&
     		count(array_diff_key($this->orderValidationFields, $data['order'])) > 0
