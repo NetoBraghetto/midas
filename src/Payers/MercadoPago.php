@@ -2,204 +2,145 @@
 namespace Braghetto\Midas\Payers;
 
 use Braghetto\Midas\Interfaces\Payable;
+use MP;
+
 /**
 * MercadoPago
 */
-class MercadoPago implements Payable
+class MercadoPago extends AbstractPayer implements Payable
 {
-	private $id;
+    // private $id;
 
-	private $secret;
+    // private $secret;
 
-	private $payment_methods = [
-		'101' => 'visa'
-	];
+    private $client;
 
-	protected $order;
+    private $payment_methods = [
+        '101' => 'visa'
+    ];
 
-	protected $parsedOrder;
+    // protected $attributes;
 
-	protected $items;
+    protected $parsedOrder;
 
-	protected $parsedItems;
+    // protected $items;
 
-	protected $customer;
+    // protected $parsedItems;
 
-	protected $parsedCustomer;
+    // protected $customer;
 
-	protected $address;
+    // protected $parsedCustomer;
 
-	protected $parsedAddress;
+    // protected $address;
 
-	protected $validationFields = [
-		// 'order' => [
-	 //        'id',
-	 //        'total',
-	 //        'installments',
-	 //    ],
-	 //    'payment' => [
-	 //        'method',
-	 //    ],
-	    'items' => [
-	    	[
-		        'id',
-				'name',
-				'image_url',
-				'description',
-				'quantity',
-				'price',
-	    	]
-	    ],
-	    // 'shipping_address' => [
-	    //     'street',
-	    //     'number',
-	    //     'zip_code',
-	    // ],
-	    // 'customer' => [
-	    //     'name',
-	    //     'last_name',
-	    //     'email',
-	    //     'phones' => [
-	    //         ['area_code', 'number'],
-	    //     ],
-	    //     'created_at',
-	    // ],
-	];
+    // protected $parsedAddress;
 
-	public function __construct($client_id, $client_secret)
-	{
-		$this->id = $client_id;
-		$this->secret = $client_secret;
-	}
+    protected $validationFields = [
+        'order' => [
+            'id',
+            'total',
+            'installments',
+        ],
+        'payment' => [
+            'method',
+        ],
+        'items' => [
+            [
+                'id',
+                'name',
+                'image_url',
+                'description',
+                'quantity',
+                'price',
+            ]
+        ],
+        'shipping_address' => [
+            'street',
+            'number',
+            'zip_code',
+        ],
+        'customer' => [
+            'name',
+            'last_name',
+            'email',
+            'phones' => [
+                ['area_code', 'number'],
+            ],
+            'created_at',
+        ],
+    ];
 
-	protected function validate($fields, $data)
-	{
-		foreach ($fields as $key => $field) {
-			if (is_array($field)) {
-				if (!$this->validate($fields[$key], $data[$key])) {
-					return false;
-				}
-			} else{
-				var_dump($data);
-				if (!isset($data[$field])) {
-					return false;
-				}
-			}
-		}
-		return true;
-	}
+    public function __construct($client_id, $client_secret = null)
+    {
+        // $this->id = $client_id;
+        // $this->secret = $client_secret;
+        $this->client = new MP($client_id, $client_secret);
+    }
 
     public function fill(array $data)
     {
-    	// dd($data);
-    	// dd($this->validationFields);
-    	dd($this->validate($this->validationFields, $data));
-    	dd(2);
-    	if (
-    		!isset($data['items'], $data['shipping'], $data['customer']) &&
-    		count(array_diff_key($this->orderValidationFields, $data['order'])) > 0
-    	) {
-    		return false;
-    	}
-    	$this->order = $data['order'];
+        if (!$this->validate($this->validationFields, $data)) {
+            return false;
+        }
+        $this->parsedOrder = [
+            'transaction_amount' => $data['order']['total'],
+            'installments' => $data['order']['installments'],
+            'payment_method_id' => $this->payment_methods[$data['payment']['method']],
+            'payer' => [
+                'email' => $data['customer']['email'],
+            ],
+            'external_reference' => $data['order']['id'],
+            'additional_info' => [
+                'items' => $this->parseItems($data['items']),
+                'payer' => [
+                    'first_name' => $data['customer']['name'],
+                    'last_name' => $data['customer']['last_name'],
+                    'registration_date' => $data['customer']['created_at'],
+                    'phone' => [
+                        'area_code' => $data['customer']['phones'][0]['area_code'],
+                        'number' => $data['customer']['phones'][0]['number'],
+                    ],
+                    'address' => [
+                        'street_name' => $data['shipping_address']['street'],
+                        'street_number' => $data['shipping_address']['number'],
+                        'zip_code' => $data['shipping_address']['zip_code'],
+                    ],
+                ],
+                'shipments' => [
+                    'receiver_address' => [
+                        'street_name' => $data['shipping_address']['street'],
+                        'street_number' => $data['shipping_address']['number'],
+                        'zip_code' => $data['shipping_address']['zip_code'],
+                    ],
+                ],
+            ],
+        ];
 
-    	$this->setItems($data['items']);
-    	$this->setShipping($data['shipping']);
-    	$this->setCustomer($data['customer']);
-    	$this->parsedOrder = [
-    		'transaction_amount' => $data['order']['total'],
-			'installments' => $data['order']['installments'],
-			'payment_method_id' => $this->payment_methods[$data['payment']['method']],
-			'payer' => $this->parsedCustomer,
-			'external_reference' => $data['order']['id'],
-			'additional_info' => [
-				'items' => $this->parsedItems,
-				'payer' => $this->parsedCustomer,
-				'shipments' => $this->parsedAddress
-			],
-    	];
-
-    	if (!empty($data['vendor'])) {
-    		$this->parsedOrder = array_merge($this->parsedOrder, $data['vendor']);
-    	}
+        if (!empty($data['vendor'])) {
+            $this->parsedOrder = array_merge_recursive($this->parsedOrder, $data['vendor']);
+        }
     }
 
     public function pay()
     {
-    	if (isset($this->parsedItems, $this->parsedAddress, $this->parsedCustomer)) {
-    		
-    	}
-    	return false;
+        $payment = $this->client->post("/v1/payments", $this->parsedOrder);
+        dd($payment);
+        // return false;
     }
 
-    protected function setItems(array $items)
+    protected function parseItems(array $items)
     {
-    	if (!$this->validateItems($items)) {
-    		return false;
-    	}
-    	$this->items = $items;
-    	$this->parsedItems = [];
-
-    	foreach ($items as $item) {
-    		$this->parsedItems[] = [
-				'id' => $item['id'],
-				'title' => $item['name'],
-				'picture_url' => $item['image_url'],
-				'description' => $item['description'],
-				'quantity' => $item['quantity'],
-				'unit_price' => $item['price'],
-    		];
-    	}
+        $parsed = [];
+        foreach ($items as $item) {
+            $parsed[] = [
+                'id' => $item['id'],
+                'title' => $item['name'],
+                'picture_url' => $item['image_url'],
+                'description' => $item['description'],
+                'quantity' => $item['quantity'],
+                'unit_price' => $item['price'],
+            ];
+        }
+        return $parsed;
     }
-
-    public function setShipping(array $address)
-    {
-    	if (count(array_diff_key($this->addressValidationFields, $address)) > 0) {
-			return false;
-		}
-    	$this->address = $address;
-
-		$this->parsedAddress = [
-			'receiver_address' => [
-				'street_name' => $address['street'],
-				'street_number' => $address['number'],
-				'zip_code' => $address['zip_code'],
-				// 'floor' => $address['AAA'],
-				// 'apartment' => $address['AAA'],
-			]
-		];
-    }
-
-    public function setCustomer(array $customer)
-    {
-    	if (count(array_diff_key($this->customerValidationFields, $customer)) > 0) {
-			return false;
-		}
-    	$this->customer = $customer;
-
-		$this->parsedCustomer = [
-			'first_name' => $customer['name'],
-			'last_name' => $customer['last_name'],
-			'registration_date' => $customer['created_at'],
-			'phone' => [
-				'area_code' => $customer['phones'][0]['area_code'],
-				'number' => $customer['phones'][0]['number'],
-			],
-			'address' => [
-				'street_name' => $this->address['street'],
-				'street_number' => $this->address['number'],
-				'zip_code' => $this->address['zip_code'],
-			],
-		];
-    }
-
-	protected function validateItems(array $items)
-	{
-		foreach ($items as $item) {
-			if (count(array_diff_key($this->itemValidationFields, $item)) > 0) {
-				return false;
-			}
-		}
-		return true;
-	}
 }
