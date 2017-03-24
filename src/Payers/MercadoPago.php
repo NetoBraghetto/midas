@@ -9,10 +9,6 @@ use MP;
 */
 class MercadoPago extends AbstractPayer implements Payable
 {
-    // private $id;
-
-    // private $secret;
-
     private $client;
 
     private $payment_methods = [
@@ -72,8 +68,6 @@ class MercadoPago extends AbstractPayer implements Payable
 
     public function __construct($client_id, $client_secret = null)
     {
-        // $this->id = $client_id;
-        // $this->secret = $client_secret;
         $this->client = new MP($client_id, $client_secret);
     }
 
@@ -117,15 +111,34 @@ class MercadoPago extends AbstractPayer implements Payable
         ];
 
         if (!empty($data['vendor'])) {
-            $this->parsedOrder = array_merge_recursive($this->parsedOrder, $data['vendor']);
+            $this->parsedOrder = array_merge($this->parsedOrder, $data['vendor']);
         }
     }
 
     public function pay()
     {
-        $payment = $this->client->post("/v1/payments", $this->parsedOrder);
-        dd($payment);
-        // return false;
+        $payment = $this->client->post('/v1/payments', $this->parsedOrder);
+        foreach ($payment['reponse']['fee_details'] as $fee) {
+            if ($fee['type'] == 'mercadopago_fee') {
+                $vendor_fee = $fee['amount']
+            }
+        }
+        if ($payment['status'] == 201) {
+            return [
+                'vendor_id' => $payment['reponse']['id'],
+                // 'status' => $payment['reponse']['status'], // De-por
+                'order_total' => $payment['reponse']['transaction_details']['total_paid_amount'],
+                'received_amount' => $payment['reponse']['transaction_details']['net_received_amount'],
+                'total_paid' => $payment['reponse']['transaction_details']['total_paid_amount'],
+                'installments' => $payment['reponse']['installments'],
+                'installment_value' => $payment['reponse']['transaction_details']['installment_amount'],
+                'vendor_fee' => $vendor_fee,
+
+                'http_status' => $payment['status'],
+                'response' => $payment['reponse']
+            ];
+        }
+        return false;
     }
 
     protected function parseItems(array $items)
