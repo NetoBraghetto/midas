@@ -7,12 +7,25 @@ use MP;
 /**
 * MercadoPago
 */
+
 class MercadoPago extends AbstractPayer implements Payable
 {
     private $client;
 
     private $payment_methods = [
         '101' => 'visa'
+    ];
+
+    private $status = [
+        'approved' => '1',
+        'pending' => '2',
+        'authorized' => 'authorized',
+        'in_process' => 'in_process',
+        'in_mediation' => 'in_mediation',
+        'rejected' => '4',
+        'cancelled' => '5',
+        'refunded' => 'refunded',
+        'charged_back' => 'charged_back',
     ];
 
     // protected $attributes;
@@ -120,13 +133,13 @@ class MercadoPago extends AbstractPayer implements Payable
         $payment = $this->client->post('/v1/payments', $this->parsedOrder);
         foreach ($payment['reponse']['fee_details'] as $fee) {
             if ($fee['type'] == 'mercadopago_fee') {
-                $vendor_fee = $fee['amount']
+                $vendor_fee = $fee['amount'];
             }
         }
         if ($payment['status'] == 201) {
             return [
                 'vendor_id' => $payment['reponse']['id'],
-                // 'status' => $payment['reponse']['status'], // De-por
+                'status' => $this->status[$payment['reponse']['status']],
                 'order_total' => $payment['reponse']['transaction_details']['total_paid_amount'],
                 'received_amount' => $payment['reponse']['transaction_details']['net_received_amount'],
                 'total_paid' => $payment['reponse']['transaction_details']['total_paid_amount'],

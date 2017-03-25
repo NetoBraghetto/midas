@@ -104,6 +104,15 @@ $data = [
 Codes
 -------------
 
+###Status
+| code | Description |
+|---|---|
+| 1 | Approved |
+| 2 | Waiting for payment |
+| 3 | Analyzing |
+| 4 | Rejected |
+| 5 | Canceled |
+
 ###Banks
 
 | code | Description |
