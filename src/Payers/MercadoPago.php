@@ -75,13 +75,17 @@ class MercadoPago extends AbstractPayer implements Payable
             'phones' => [
                 ['area_code', 'number'],
             ],
-            'created_at',
         ],
     ];
 
-    public function __construct($client_id, $client_secret = null)
+    public function __construct($client_id, $client_secret = null, $sandbox = true)
     {
-        $this->client = new MP($client_id, $client_secret);
+        if (isset($client_secret)) {
+            $this->client = new MP($client_id, $client_secret);
+        } else {
+            $this->client = new MP($client_id);
+        }
+        $this->client->sandbox_mode($sandbox);
     }
 
     public function fill(array $data)
@@ -102,7 +106,6 @@ class MercadoPago extends AbstractPayer implements Payable
                 'payer' => [
                     'first_name' => $data['customer']['name'],
                     'last_name' => $data['customer']['last_name'],
-                    'registration_date' => $data['customer']['created_at'],
                     'phone' => [
                         'area_code' => $data['customer']['phones'][0]['area_code'],
                         'number' => $data['customer']['phones'][0]['number'],
@@ -126,29 +129,31 @@ class MercadoPago extends AbstractPayer implements Payable
         if (!empty($data['vendor'])) {
             $this->parsedOrder = array_merge($this->parsedOrder, $data['vendor']);
         }
+        return true;
     }
 
     public function pay()
     {
         $payment = $this->client->post('/v1/payments', $this->parsedOrder);
-        foreach ($payment['reponse']['fee_details'] as $fee) {
+        $response = $payment['response'];
+        foreach ($response['fee_details'] as $fee) {
             if ($fee['type'] == 'mercadopago_fee') {
                 $vendor_fee = $fee['amount'];
             }
         }
         if ($payment['status'] == 201) {
             return [
-                'vendor_id' => $payment['reponse']['id'],
-                'status' => $this->status[$payment['reponse']['status']],
-                'order_total' => $payment['reponse']['transaction_details']['total_paid_amount'],
-                'received_amount' => $payment['reponse']['transaction_details']['net_received_amount'],
-                'total_paid' => $payment['reponse']['transaction_details']['total_paid_amount'],
-                'installments' => $payment['reponse']['installments'],
-                'installment_value' => $payment['reponse']['transaction_details']['installment_amount'],
+                'vendor_id' => $response['id'],
+                'status' => $this->status[$response['status']],
+                'order_total' => $response['transaction_details']['total_paid_amount'],
+                'received_amount' => $response['transaction_details']['net_received_amount'],
+                'total_paid' => $response['transaction_details']['total_paid_amount'],
+                'installments' => $response['installments'],
+                'installment_value' => $response['transaction_details']['installment_amount'],
                 'vendor_fee' => $vendor_fee,
 
                 'http_status' => $payment['status'],
-                'response' => $payment['reponse']
+                'response' => $response
             ];
         }
         return false;
