@@ -32,6 +32,8 @@ class MercadoPago extends AbstractPayer implements Payable
 
     protected $parsedOrder;
 
+    protected $response;
+
     // protected $items;
 
     // protected $parsedItems;
@@ -134,14 +136,14 @@ class MercadoPago extends AbstractPayer implements Payable
 
     public function pay()
     {
-        $payment = $this->client->post('/v1/payments', $this->parsedOrder);
-        $response = $payment['response'];
+        $this->response = $this->client->post('/v1/payments', $this->parsedOrder);
+        $response = $this->response['response'];
         foreach ($response['fee_details'] as $fee) {
             if ($fee['type'] == 'mercadopago_fee') {
                 $vendor_fee = $fee['amount'];
             }
         }
-        if ($payment['status'] == 201) {
+        if ($this->response['status'] == 201) {
             return [
                 'vendor_id' => $response['id'],
                 'status' => $this->status[$response['status']],
@@ -152,11 +154,16 @@ class MercadoPago extends AbstractPayer implements Payable
                 'installment_value' => $response['transaction_details']['installment_amount'],
                 'vendor_fee' => $vendor_fee,
 
-                'http_status' => $payment['status'],
+                'http_status' => $this->response['status'],
                 'response' => $response
             ];
         }
         return false;
+    }
+
+    public function getResponse()
+    {
+        return $this->response;
     }
 
     protected function parseItems(array $items)
