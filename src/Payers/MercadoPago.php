@@ -90,9 +90,9 @@ class MercadoPago extends AbstractPayer implements Payable
         $this->client->sandbox_mode($sandbox);
     }
 
-    public function fill(array $data)
+    public function fill(array $data, $bail = false)
     {
-        if (!$this->validate($this->validationFields, $data)) {
+        if (!$this->validate($this->validationFields, $data, $bail)) {
             return false;
         }
         $this->parsedOrder = [

@@ -17,21 +17,163 @@ class MercadoPagoTest extends AbstractTestCase
 
     protected function setUp()
     {
-        // $this->payer = new MercadoPago(self::$config['client_id'], self::$config['client_secret']);
         $this->payer = new MercadoPago(self::$config['access_token']);
     }
 
-    public function testAuthentication()
+    public function testFillValidationOneFieldWithBail()
     {
-        // $a = ['a' => 1, 'b' => 1, 'c' => 1, ];
-        // $b = ['a' => 1, 'b' => 1, 'c' => 1, 'd' => 2];
-        // dd(count(array_diff_key($a, $b)));
-        // dd($this->payer);
-        // $payer = new MercadoPago(self::$config[]);
-        // dd($this->payer);
-        $this->payer->fill([
+        $data = $this->getData();
+        unset($data['order']['total']);
+
+        $this->assertFalse($this->payer->fill($data, true));
+
+        $mFields = $this->payer->getMissingFields();
+        $this->assertEquals(1, count($mFields));
+        $this->assertEquals('order.total', $mFields[0]);
+    }
+
+    public function testFillValidationOneFieldWithoutBail()
+    {
+        $data = $this->getData();
+        unset($data['order']['total']);
+
+        $this->assertFalse($this->payer->fill($data));
+
+        $mFields = $this->payer->getMissingFields();
+        $this->assertEquals(1, count($mFields));
+        $this->assertEquals('order.total', $mFields[0]);
+    }
+
+    public function testFillValidationOneFieldInArrayWithBail()
+    {
+        $data = $this->getData();
+        unset($data['items'][1]['name']);
+
+        $this->assertFalse($this->payer->fill($data, true));
+
+        $mFields = $this->payer->getMissingFields();
+        $this->assertEquals(1, count($mFields));
+        $this->assertEquals('items.1.name', $mFields[0]);
+    }
+
+    public function testFillValidationOneFieldInArrayWithoutBail()
+    {
+        $data = $this->getData();
+        unset($data['items'][1]['name']);
+
+        $this->assertFalse($this->payer->fill($data));
+
+        $mFields = $this->payer->getMissingFields();
+        $this->assertEquals(1, count($mFields));
+        $this->assertEquals('items.1.name', $mFields[0]);
+    }
+
+    public function testFillValidationMultipleFieldsWithBail()
+    {
+        $data = $this->getData();
+        unset($data['order']['total']);
+        unset($data['cusomer']['name']);
+
+        $this->assertFalse($this->payer->fill($data, true));
+
+        $mFields = $this->payer->getMissingFields();
+        $this->assertEquals(1, count($mFields));
+        $this->assertEquals('order.total', $mFields[0]);
+    }
+
+    public function testFillValidationMultipleFieldsWithoutBail()
+    {
+        $data = $this->getData();
+        unset($data['order']['total']);
+        unset($data['customer']['name']);
+
+        $this->assertFalse($this->payer->fill($data));
+
+        $mFields = $this->payer->getMissingFields();
+        $this->assertEquals(2, count($mFields));
+        $this->assertEquals('order.total', $mFields[0]);
+        $this->assertEquals('customer.name', $mFields[1]);
+    }
+
+    public function testFillValidationMultipleFieldsInArrayWithBail()
+    {
+        $data = $this->getData();
+        unset($data['items'][1]['name']);
+        unset($data['items'][0]['id']);
+        unset($data['items'][1]['id']);
+
+        $this->assertFalse($this->payer->fill($data, true));
+
+        $mFields = $this->payer->getMissingFields();
+        $this->assertEquals(1, count($mFields));
+        $this->assertEquals('items.0.id', $mFields[0]);
+    }
+
+    public function testFillValidationMultipleFieldsInArrayWithoutBail()
+    {
+        $data = $this->getData();
+        unset($data['items'][1]['name']);
+        unset($data['items'][0]['id']);
+        unset($data['items'][1]['id']);
+
+        $this->assertFalse($this->payer->fill($data));
+
+        $mFields = $this->payer->getMissingFields();
+        $this->assertEquals(3, count($mFields));
+        $this->assertEquals('items.0.id', $mFields[0]);
+        $this->assertEquals('items.1.id', $mFields[1]);
+        $this->assertEquals('items.1.name', $mFields[2]);
+    }
+
+    public function testFillValidationMultipleFieldsAndFieldsInArrayWithBail()
+    {
+        $data = $this->getData();
+        unset($data['order']['total']);
+        unset($data['items'][1]['name']);
+        unset($data['items'][0]['id']);
+        unset($data['items'][1]['id']);
+
+        $this->assertFalse($this->payer->fill($data, true));
+
+        $mFields = $this->payer->getMissingFields();
+        $this->assertEquals(1, count($mFields));
+        $this->assertEquals('order.total', $mFields[0]);
+    }
+
+    public function testFillValidationMultipleFieldsAndFieldsInArrayWithoutBail()
+    {
+        $data = $this->getData();
+        unset($data['order']['total']);
+        unset($data['items'][1]['name']);
+        unset($data['items'][0]['id']);
+        unset($data['items'][1]['id']);
+        unset($data['customer']['name']);
+
+        $this->assertFalse($this->payer->fill($data));
+
+        $mFields = $this->payer->getMissingFields();
+        $this->assertEquals(5, count($mFields));
+        $this->assertEquals('order.total', $mFields[0]);
+        $this->assertEquals('items.0.id', $mFields[1]);
+        $this->assertEquals('items.1.id', $mFields[2]);
+        $this->assertEquals('items.1.name', $mFields[3]);
+        $this->assertEquals('customer.name', $mFields[4]);
+    }
+
+    public function testFillValidationOk()
+    {
+        $data = $this->getData();
+
+        $this->assertTrue($this->payer->fill($data));
+        $mFields = $this->payer->getMissingFields();
+        $this->assertEquals(0, count($mFields));
+    }
+
+    private function getData()
+    {
+        return [
             'order' => [
-                'id' => rand(1, 500000),
+                'id' => 200,
                 'subtotal' => 1182.94,
                 'extra' => -118.29,
                 'total' => 1064.65,
@@ -119,7 +261,6 @@ class MercadoPagoTest extends AbstractTestCase
             'vendor' => [ // Array with extra fields to merge in the request
                 // ...
             ]
-        ]);
-        $this->payer->pay();
+        ];
     }
 }
