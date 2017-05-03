@@ -105,13 +105,15 @@ Codes
 -------------
 
 ###Status
+
 | code | Description |
 |---|---|
-| 1 | Approved |
+| 1 | Received |
 | 2 | Waiting for payment |
 | 3 | Analyzing |
-| 4 | Rejected |
-| 5 | Canceled |
+| 4 | Approved |
+| 5 | Rejected |
+| 6 | Canceled |
 
 ###Banks
 
@@ -154,6 +156,8 @@ Codes
 | 117 | Cartão de crédito Mais! |
 | 118 | Cartão de crédito Avista |
 | 119 | Cartão de crédito GRANDCARD |
+| 120 | Cartão de crédito Hipercard |
+| 121 | Cartão de crédito MercadoLivre |
 | 201 | Boleto Bradesco |
 | 202 | Boleto Santander |
 | 303 | Débito online Bradesco |

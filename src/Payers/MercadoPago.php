@@ -13,17 +13,24 @@ class MercadoPago extends AbstractPayer implements Payable
     private $client;
 
     private $payment_methods = [
-        '101' => 'visa'
+        '101' => 'visa',
+        '102' => 'master',
+        '103' => 'amex',
+        '104' => 'diners',
+        '107' => 'elo',
+        '120' => 'hipercard',
+        '121' => 'melicard',
+        '203' => 'bolbradesco',
     ];
 
     private $status = [
-        'approved' => '1',
+        'approved' => '4',
         'pending' => '2',
         'authorized' => 'authorized',
         'in_process' => 'in_process',
         'in_mediation' => 'in_mediation',
-        'rejected' => '4',
-        'cancelled' => '5',
+        'rejected' => '5',
+        'cancelled' => '6',
         'refunded' => 'refunded',
         'charged_back' => 'charged_back',
     ];
