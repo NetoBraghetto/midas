@@ -57,9 +57,10 @@ class MercadoPago extends AbstractPayer implements Payable
         'order' => [
             'id',
             'total',
-            'installments',
+            // 'installments',
         ],
         'payment' => [
+            'group',
             'method',
         ],
         'items' => [
@@ -99,12 +100,15 @@ class MercadoPago extends AbstractPayer implements Payable
 
     public function fill(array $data, $bail = false)
     {
+        if ((int) $data['payment']['group'] === 2) {
+            unset($this->validationFields['order']['installments']);
+        }
         if (!$this->validate($this->validationFields, $data, $bail)) {
             return false;
         }
         $this->parsedOrder = [
             'transaction_amount' => $data['order']['total'],
-            'installments' => $data['order']['installments'],
+            // 'installments' => $data['order']['installments'],
             'payment_method_id' => $this->payment_methods[$data['payment']['method']],
             'payer' => [
                 'email' => $data['customer']['email'],
@@ -134,6 +138,9 @@ class MercadoPago extends AbstractPayer implements Payable
                 ],
             ],
         ];
+        if ((int) $data['payment']['group'] !== 2) {
+            $this->parsedOrder['transaction_amount'] = $data['order']['total'];
+        }
 
         if (!empty($data['vendor'])) {
             $this->parsedOrder = array_merge($this->parsedOrder, $data['vendor']);
@@ -147,34 +154,34 @@ class MercadoPago extends AbstractPayer implements Payable
         return ($this->response['status'] == 201);
     }
 
-    public function getFormatedResponse()
-    {
-        $response = $this->response;
-        if ($response['status'] == 201) {
-            $vendor_fee = null;
-            if (!empty($response['fee_details'])) {
-                foreach ($response['fee_details'] as $fee) {
-                    if ($fee['type'] == 'mercadopago_fee') {
-                        $vendor_fee = $fee['amount'];
-                    }
-                }
-            }
-            return [
-                'vendor_id' => $response['id'],
-                'status' => $this->status[$response['status']],
-                'order_total' => $response['transaction_details']['total_paid_amount'],
-                'received_amount' => $response['transaction_details']['net_received_amount'],
-                'total_paid' => $response['transaction_details']['total_paid_amount'],
-                'installments' => $response['installments'],
-                'installment_value' => $response['transaction_details']['installment_amount'],
-                'vendor_fee' => $vendor_fee,
+    // public function getFormatedResponse()
+    // {
+    //     $response = $this->response;
+    //     if ($response['status'] == 201) {
+    //         $vendor_fee = null;
+    //         if (!empty($response['fee_details'])) {
+    //             foreach ($response['fee_details'] as $fee) {
+    //                 if ($fee['type'] == 'mercadopago_fee') {
+    //                     $vendor_fee = $fee['amount'];
+    //                 }
+    //             }
+    //         }
+    //         return [
+    //             'vendor_id' => $response['id'],
+    //             'status' => $this->status[$response['status']],
+    //             'order_total' => $response['transaction_details']['total_paid_amount'],
+    //             'received_amount' => $response['transaction_details']['net_received_amount'],
+    //             'total_paid' => $response['transaction_details']['total_paid_amount'],
+    //             'installments' => $response['installments'],
+    //             'installment_value' => $response['transaction_details']['installment_amount'],
+    //             'vendor_fee' => $vendor_fee,
 
-                'http_status' => $response['status'],
-                'response' => $response
-            ];
-        }
-        return false;
-    }
+    //             'http_status' => $response['status'],
+    //             'response' => $response
+    //         ];
+    //     }
+    //     return false;
+    // }
 
     public function getRawResponse()
     {
