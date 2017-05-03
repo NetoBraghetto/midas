@@ -112,8 +112,12 @@ Codes
 | 2 | Waiting for payment |
 | 3 | Analyzing |
 | 4 | Approved |
-| 5 | Rejected |
-| 6 | Canceled |
+| 5 | Authorized |
+| 6 | Rejected |
+| 7 | Canceled |
+| 8 | In Mediation |
+| 9 | Refunded |
+| 10 | Charged back |
 
 ###Banks
 
@@ -158,8 +162,9 @@ Codes
 | 119 | Cartão de crédito GRANDCARD |
 | 120 | Cartão de crédito Hipercard |
 | 121 | Cartão de crédito MercadoLivre |
-| 201 | Boleto Bradesco |
+| 201 | Boleto BB |
 | 202 | Boleto Santander |
+| 203 | Boleto Bradesco |
 | 303 | Débito online Bradesco |
 | 304 | Débito online Itaú |
 | 305 | Débito online Unibanco |

@@ -24,15 +24,15 @@ class MercadoPago extends AbstractPayer implements Payable
     ];
 
     private $status = [
-        'approved' => '4',
-        'pending' => '2',
-        'authorized' => 'authorized',
-        'in_process' => 'in_process',
-        'in_mediation' => 'in_mediation',
-        'rejected' => '5',
-        'cancelled' => '6',
-        'refunded' => 'refunded',
-        'charged_back' => 'charged_back',
+        'pending' => 2,
+        'in_process' => 3,
+        'approved' => 4,
+        'authorized' => 5,
+        'rejected' => 6,
+        'cancelled' => 7,
+        'in_mediation' => 8,
+        'refunded' => 9,
+        'charged_back' => 10,
     ];
 
     // protected $attributes;
@@ -144,13 +144,18 @@ class MercadoPago extends AbstractPayer implements Payable
     public function pay()
     {
         $this->response = $this->client->post('/v1/payments', $this->parsedOrder);
-        $response = $this->response['response'];
-        foreach ($response['fee_details'] as $fee) {
-            if ($fee['type'] == 'mercadopago_fee') {
-                $vendor_fee = $fee['amount'];
+        return ($this->response['status'] == 201);
+    }
+
+    public function getFormatedResponse()
+    {
+        $response = $this->response;
+        if ($response['status'] == 201) {
+            foreach ($response['fee_details'] as $fee) {
+                if ($fee['type'] == 'mercadopago_fee') {
+                    $vendor_fee = $fee['amount'];
+                }
             }
-        }
-        if ($this->response['status'] == 201) {
             return [
                 'vendor_id' => $response['id'],
                 'status' => $this->status[$response['status']],
@@ -161,14 +166,14 @@ class MercadoPago extends AbstractPayer implements Payable
                 'installment_value' => $response['transaction_details']['installment_amount'],
                 'vendor_fee' => $vendor_fee,
 
-                'http_status' => $this->response['status'],
+                'http_status' => $response['status'],
                 'response' => $response
             ];
         }
         return false;
     }
 
-    public function getResponse()
+    public function getRawResponse()
     {
         return $this->response;
     }
