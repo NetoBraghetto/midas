@@ -151,9 +151,12 @@ class MercadoPago extends AbstractPayer implements Payable
     {
         $response = $this->response;
         if ($response['status'] == 201) {
-            foreach ($response['fee_details'] as $fee) {
-                if ($fee['type'] == 'mercadopago_fee') {
-                    $vendor_fee = $fee['amount'];
+            $vendor_fee = null;
+            if (!empty($response['fee_details'])) {
+                foreach ($response['fee_details'] as $fee) {
+                    if ($fee['type'] == 'mercadopago_fee') {
+                        $vendor_fee = $fee['amount'];
+                    }
                 }
             }
             return [
