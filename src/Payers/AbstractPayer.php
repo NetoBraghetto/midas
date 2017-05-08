@@ -34,6 +34,7 @@ abstract class AbstractPayer
             if (is_array($field)) {
                 $this->tail .= $key . '.';
                 if (!isset($data[$key]) || !is_array($data[$key])) {
+                    $this->missingFields[] = substr($this->tail, 0, -1);
                     if ($bail) {
                         return false;
                     }
@@ -46,7 +47,7 @@ abstract class AbstractPayer
                         }
                     }
                 } else {
-                    if (!$this->validate($field, $data[$key], $bail)) {
+                    if (!isset($data[$key]) || !$this->validate($field, $data[$key], $bail)) {
                         if ($bail) {
                             return false;
                         }
