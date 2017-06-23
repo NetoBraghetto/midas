@@ -108,7 +108,7 @@ class MercadoPago extends AbstractPayer implements Payable
         }
         $this->parsedOrder = [
             'transaction_amount' => $data['order']['total'],
-            'installments' => $data['order']['installments'],
+            // 'installments' => $data['order']['installments'],
             'payment_method_id' => $this->payment_methods[$data['payment']['method']],
             'payer' => [
                 'email' => $data['customer']['email'],
@@ -139,7 +139,7 @@ class MercadoPago extends AbstractPayer implements Payable
             ],
         ];
         if ((int) $data['payment']['group'] !== 2) {
-            $this->parsedOrder['transaction_amount'] = $data['order']['total'];
+            $this->parsedOrder['installments'] = $data['order']['installments'];
         }
 
         if (!empty($data['vendor'])) {
