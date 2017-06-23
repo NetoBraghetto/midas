@@ -57,7 +57,7 @@ class MercadoPago extends AbstractPayer implements Payable
         'order' => [
             'id',
             'total',
-            // 'installments',
+            'installments',
         ],
         'payment' => [
             'group',
@@ -108,7 +108,7 @@ class MercadoPago extends AbstractPayer implements Payable
         }
         $this->parsedOrder = [
             'transaction_amount' => $data['order']['total'],
-            // 'installments' => $data['order']['installments'],
+            'installments' => $data['order']['installments'],
             'payment_method_id' => $this->payment_methods[$data['payment']['method']],
             'payer' => [
                 'email' => $data['customer']['email'],
