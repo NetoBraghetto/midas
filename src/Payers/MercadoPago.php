@@ -57,7 +57,7 @@ class MercadoPago extends AbstractPayer implements Payable
         'order' => [
             'id',
             'total',
-            'installments',
+            // 'installments',
         ],
         'payment' => [
             'group',
@@ -100,9 +100,9 @@ class MercadoPago extends AbstractPayer implements Payable
 
     public function fill(array $data, $bail = false)
     {
-        if ((int) $data['payment']['group'] === 2) {
-            unset($this->validationFields['order']['installments']);
-        }
+        // if ((int) $data['payment']['group'] === 2) {
+        //     unset($this->validationFields['order']['installments']);
+        // }
         if (!$this->validate($this->validationFields, $data, $bail)) {
             return false;
         }
