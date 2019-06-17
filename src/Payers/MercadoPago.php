@@ -106,12 +106,32 @@ class MercadoPago extends AbstractPayer implements Payable
         if (!$this->validate($this->validationFields, $data, $bail)) {
             return false;
         }
+
         $this->parsedOrder = [
             'transaction_amount' => $data['order']['total'],
             // 'installments' => $data['order']['installments'],
             'payment_method_id' => $this->payment_methods[$data['payment']['method']],
             'payer' => [
+                'first_name' => $data['customer']['name'],
+                'last_name' => $data['customer']['last_name'],
                 'email' => $data['customer']['email'],
+                'identification' => [
+                    'type' => 'CPF',
+                    'number' => $data['customer']['cpf'],
+                ],
+                // 'phone' => [
+                //     'area_code' => $data['customer']['phones'][0]['area_code'],
+                //     'number' => $data['customer']['phones'][0]['number'],
+                //     // 'area_code' => '',
+                //     // 'number' => '+55 (' . $data['customer']['phones'][0]['area_code'] . ')' . $data['customer']['phones'][0]['number'],
+                // ],
+                'address' => [
+                    'street_name' => $data['shipping_address']['street'],
+                    'street_number' => $data['shipping_address']['number'],
+                    'zip_code' => $data['shipping_address']['zip_code'],
+                ],
+                // 'date_created' => $data['customer']['created_at'],
+                // 'date_created' => date('c', strtotime($data['customer']['created_at'])),
             ],
             'external_reference' => $data['order']['id'],
             'additional_info' => [
